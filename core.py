@@ -110,14 +110,23 @@ def link_update(link):
     return html[start:end]
 
 
-def save_from1(link):
+def save_from1(link, visited=None):
+    if visited is None:
+        visited = set()  
+    
+    if link in visited:
+        return  
+    
+    visited.add(link)
+
     response = requests.get(link)
-    while response.status_code == 200:
-        save(title=get_title(link),text=clear_text(get_text(link)),link=link)
-        if link_update(link)!="":
-            save_from1(link_update(link))
-        else: break
-# link_update(link1)
+    if response.status_code == 200:
+        save(title=get_title(link), text=clear_text(get_text(link)), link=link)
+        
+        next_link = link_update(link)
+        if isinstance(next_link, str) and next_link.startswith("http"):
+            save_from1(next_link, visited)
+
 
 #using whole thing
 while True:
@@ -126,6 +135,8 @@ while True:
         break
     else:
         print("Wait, work in progres....")
-        save_from1(user_input)
+        try:save_from1(user_input)
+        except:
+            print("Wrong url")
         print("Done")
         
